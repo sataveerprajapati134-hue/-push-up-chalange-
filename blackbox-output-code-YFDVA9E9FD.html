@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Push Challenge - Master 1000 Push-ups</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@latest"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --neon-green: #39ff14;
+            --neon-green-glow: 0 0 20px #39ff14, 0 0 40px #39ff14;
+            --black: #0a0a0a;
+            --dark-gray: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--black) 0%, #111 50%, var(--black) 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--neon-green), #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: var(--neon-green-glow);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px var(--neon-green)); }
+            to { filter: drop-shadow(0 0 20px var(--neon-green)); }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(57, 255, 20, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--neon-green-glow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(57, 255, 20, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(57, 255, 20, 0.3);
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 2rem auto;
+        }
+
+        .progress-circle svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle circle {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        .progress-bg {
+            stroke: rgba(57, 255, 20, 0.2);
+        }
+
+        .progress-fill {
+            stroke: var(--neon-green);
+            stroke-dasharray: 471;
+            stroke-dashoffset: 471;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--neon-green);
+            text-shadow: var(--neon-green-glow);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--neon-green), #00ff88);
+            color: var(--black);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--neon-green-glow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(57, 255, 20, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--neon-green);
+            border: 2px solid var(--neon-green);
+        }
+
+        .btn-secondary:hover {
+            background: var(--neon-green);
+            color: var(--black);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--neon-green);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .counter-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem 1.5rem;
+            border-radius: 25px;
+            border: 2px solid var(--neon-green);
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--neon-green);
+        }
+
+        .leaderboard {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(57, 255, 20, 0.1);
+            transform: translateX(10px);
+        }
+
+        .rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--neon-green);
+            width: 50px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--neon-green);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin: 1.5rem 0;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(57, 255, 20, 0.3);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .form-group input::placeholder {
+            color: #aaa;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(57, 255, 20, 0.2);
+            border: 1px solid var(--neon-green);
+            border-radius: 25px;
+            color: var(--neon-green);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .share-btn:hover {
+            background: var(--neon-green);
+            color: var(--black);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .progress-circle {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .progress-text {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">Aura Push Challenge</h1>
+            <p class="subtitle">Master 1000 Push-ups • Earn Aura Points • Dominate Leaderboard</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Challenge Tracker -->
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 1rem; color: var(--neon-green);">
+                    <i class="fas fa-dumbbell"></i> Your Challenge
+                </h2>
+                <div class="progress-circle">
+                    <svg>
+                        <circle class="progress-bg" cx="100" cy="100" r="75"></circle>
+                        <circle class="progress-fill" cx="100" cy="100" r="75"></circle>
+                    </svg>
+                    <div class="progress-text" id="progressText">0 / 1000</div>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="totalPushups">0</div>
+                        <div class="stat-label">Total Push-ups</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="auraPoints">0</div>
+                        <div class="stat-label">Aura Points</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="rank">#999</div>
+                        <div class="stat-label">Your Rank</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin: 2rem 0;">
+                    <button class="btn" onclick="manualAddPushups()">
+                        <i class="fas fa-plus"></i> Add 10 Push-ups
+                    </button>
+                    <br><br>
+                    <button class="btn" onclick="showCameraModal()">
+                        <i class="fas fa-camera"></i> Count with Camera
+                    </button>
+                </div>
+                <div class="share-buttons">
+                    <a href="#" class="share-btn" onclick="shareProgress()">
+                        <i class="fab fa-twitter"></i> Share
+                    </a>
+                    <a href="#" class="share-btn" onclick="shareProgressFB()">
+                        <i class="fab fa-facebook"></i> Facebook
+                    </a>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 1rem; color: var(--neon-green);">
+                    <i class="fas fa-trophy"></i> Global Leaderboard
+                </h2>
+                <div class="leaderboard" id="leaderboard">
+                    <!-- Leaderboard items will be populated by JS -->
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn" onclick="login()">
+                        <i class="fas fa-user-plus"></i> Login / Signup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--neon-green); margin-bottom: 2rem;">
+                <i class="fas fa-user"></i> Join the Challenge
+            </h2>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Enter your username">
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn" onclick="signup()" style="flex: 1;">Sign Up</button>
+                <button class="btn" onclick="login()" style="flex: 1; background: #ff4444;">Login</button>
+            </div>
+            <button onclick="closeModal()" style="margin-top: 1rem; background: transparent; color: #aaa; border: none; cursor: pointer;">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal">
+        <div class="modal-content" style="width: 90vw; max-width: 800px;">
+            <h2 style="color: var(--neon-green); margin-bottom: 1rem;">
+                <i class="fas fa-camera"></i> AI Push-up Counter
+            </h2>
+            <div class="video-container">
+                <video id="videoElement" autoplay playsinline></video>
+                <div class="counter-display" id="liveCounter">0</div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button class="btn" onclick="addLivePushups()">
+                    <i class="fas fa-check"></i> Add to Challenge
+                </button>
+                <button class="btn btn-secondary" onclick="stopCamera()" style="margin-left: 1rem;">
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let user = null;
+        let totalPushups = 0;
+        let auraPoints = 0;
+        let currentSessionPushups = 0;
+        let leaderboard = [];
+        let cameraActive = false;
+
+        // Initialize
+        init();
+
+        function init() {
+            loadUserData();
+            loadLeaderboard();
+            updateProgress();
+            generateLeaderboard();
+        }
+
+        // User management
+        function signup() {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                user = { name: username, pushups: totalPushups, points: auraPoints };
+                saveUserData();
+                closeModal();
+                updateUI();
+                showNotification(`Welcome ${username}! Ready to crush 1000 pushups? 💪`);
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                // Simulate login - in real app, check against stored users
+                user = { name: username, pushups: totalPushups, points: auraPoints };
+                closeModal();
+                updateUI();
+            }
+        }
+
+        function saveUserData() {
+            localStorage.setItem('auraUser', JSON.stringify(user));
+            localStorage.setItem('totalPushups', totalPushups);
+            localStorage.setItem('auraPoints', auraPoints);
+        }
+
+        function loadUserData() {
+            const savedUser = localStorage.getItem('auraUser');
+            const savedPushups = localStorage.getItem('totalPushups');
+            const savedPoints = localStorage.getItem('auraPoints');
+            
+            if (savedUser) user = JSON.parse(savedUser);
+            if (savedPushups) totalPushups = parseInt(savedPushups);
+            if (savedPoints) auraPoints = parseInt(savedPoints);
+        }
+
+        // Progress management
+        function manualAddPushups() {
+            totalPushups += 10;
+            auraPoints += 50;
+            currentSessionPushups += 10;
+            saveUserData();
+            updateProgress();
+            updateUI();
+            showNotification('💪 +10 Push-ups added!');
+            
+            if (user) {
+                updateLeaderboard();
+            }
+        }
+
+        function addLivePushups() {
+            if (currentSessionPushups > 0) {
+                totalPushups += currentSessionPushups;
+                auraPoints += currentSessionPushups * 10;
+                currentSessionPushups = 0;
+                saveUserData();
+                updateProgress();
+                updateUI();
+                stopCamera();
+                showNotification(`🎥 +${currentSessionPushups} Push-ups verified!`);
+                
+                if (user) {
+                    updateLeaderboard();
+                }
+            }
+        }
+
+        function updateProgress() {
+            const progress = Math.min((totalPushups / 1000) * 100,
